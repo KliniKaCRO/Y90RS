@@ -1,11 +1,35 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
 import math
 
+# Page configuration
+st.set_page_config(
+    page_title="Y90RS Calculator",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS for better styling
+st.markdown("""
+    <style>
+    .main {
+        padding: 0rem 1rem;
+    }
+    .stButton>button {
+        width: 100%;
+    }
+    .risk-box {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 def calculate_meld3(bilirubin, creatinine, inr, sodium, female=False):
     """Calculate MELD 3.0 score"""
-    # Convert units if needed
+    # Convert units
     bilirubin_mgdl = bilirubin / 17.1  # μmol/L to mg/dL
     creatinine_mgdl = creatinine / 88.4  # μmol/L to mg/dL
     
@@ -29,8 +53,8 @@ def calculate_y90rs(tumor_size, tumor_volume, afp, portal_vein_status,
     """Calculate Y90RS score"""
     score = 0
     
-    # 1. Tumor Burden Component
-    # Size & Volume
+    # 1. Tumor Burden Component (0-7 points)
+    # Size & Volume (0-4)
     if tumor_size <= 3 and tumor_volume <= 100:
         score += 0
     elif (tumor_size <= 5 and tumor_volume <= 300) or \
@@ -42,7 +66,7 @@ def calculate_y90rs(tumor_size, tumor_volume, afp, portal_vein_status,
     else:
         score += 4
     
-    # AFP
+    # AFP (0-3)
     if afp <= 20:
         score += 0
     elif afp <= 400:
@@ -52,18 +76,17 @@ def calculate_y90rs(tumor_size, tumor_volume, afp, portal_vein_status,
     else:
         score += 3
     
-    # 2. Vascular Status
-    # Portal Vein Status
-    if portal_vein_status == "No thrombosis":
-        score += 0
-    elif portal_vein_status == "Bland thrombosis":
-        score += 1
-    elif portal_vein_status == "Segmental tumor thrombosis":
-        score += 2
-    else:  # Main/Lobar tumor thrombosis
-        score += 3
+    # 2. Vascular Status (0-5 points)
+    # Portal Vein Status (0-3)
+    portal_vein_scores = {
+        "No thrombosis": 0,
+        "Bland thrombosis": 1,
+        "Segmental tumor thrombosis": 2,
+        "Main/Lobar tumor thrombosis": 3
+    }
+    score += portal_vein_scores[portal_vein_status]
     
-    # Shunt Fraction
+    # Shunt Fraction (0-2)
     if shunt_fraction <= 5:
         score += 0
     elif shunt_fraction <= 10:
@@ -71,8 +94,8 @@ def calculate_y90rs(tumor_size, tumor_volume, afp, portal_vein_status,
     else:
         score += 2
     
-    # 3. Liver Function/Reserve
-    # MELD 3.0
+    # 3. Liver Function/Reserve (0-6 points)
+    # MELD 3.0 (0-2)
     if meld3 <= 10:
         score += 0
     elif meld3 <= 14:
@@ -80,7 +103,7 @@ def calculate_y90rs(tumor_size, tumor_volume, afp, portal_vein_status,
     else:
         score += 2
     
-    # Albumin
+    # Albumin (0-2)
     if albumin >= 35:
         score += 0
     elif albumin >= 28:
@@ -88,7 +111,7 @@ def calculate_y90rs(tumor_size, tumor_volume, afp, portal_vein_status,
     else:
         score += 2
     
-    # ALT/AST ratio
+    # ALT/AST ratio (0-2)
     if alt_ast_ratio <= 1.5:
         score += 0
     elif alt_ast_ratio <= 2.0:
@@ -96,8 +119,8 @@ def calculate_y90rs(tumor_size, tumor_volume, afp, portal_vein_status,
     else:
         score += 2
     
-    # 4. Inflammatory/Performance Status
-    # NLR
+    # 4. Inflammatory/Performance Status (0-4 points)
+    # NLR (0-2)
     if nlr <= 2.5:
         score += 0
     elif nlr <= 4.0:
@@ -105,7 +128,7 @@ def calculate_y90rs(tumor_size, tumor_volume, afp, portal_vein_status,
     else:
         score += 2
     
-    # ECOG Status
+    # ECOG Status (0-2)
     if ecog <= 1:
         score += 0
     elif ecog == 2:
@@ -114,15 +137,6 @@ def calculate_y90rs(tumor_size, tumor_volume, afp, portal_vein_status,
         score += 2
     
     return score
-
-def get_risk_category(score):
-    """Determine risk category based on Y90RS score"""
-    if score <= 6:
-        return "Low Risk"
-    elif score <= 12:
-        return "Intermediate Risk"
-    else:
-        return "High Risk"
 
 def get_recommendations(risk_category):
     """Get treatment recommendations based on risk category"""
@@ -200,15 +214,14 @@ def get_recommendations(risk_category):
     }
     return recommendations[risk_category]
 
+# Main app
 def main():
-    st.set_page_config(page_title="Y90RS Calculator", page_icon="🏥", layout="wide")
-    
     st.title("Y90RS: Y90 Radioembolization Score Calculator")
     st.markdown("---")
-    
+
     # Create two columns for input
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.subheader("Tumor Burden Component")
         tumor_size = st.number_input("Largest tumor size (cm)", 0.0, 30.0, step=0.1)
@@ -221,7 +234,7 @@ def main():
             ["No thrombosis", "Bland thrombosis", "Segmental tumor thrombosis", "Main/Lobar tumor thrombosis"]
         )
         shunt_fraction = st.number_input("Shunt fraction (%)", 0.0, 100.0, step=0.1)
-    
+
     with col2:
         st.subheader("Liver Function/Reserve")
         meld3_input = st.radio("MELD 3.0 input method", ["Enter MELD 3.0 directly", "Calculate MELD 3.0"])
@@ -238,7 +251,7 @@ def main():
             
             if all(v > 0 for v in [bilirubin, creatinine, inr, sodium]):
                 meld3 = calculate_meld3(bilirubin, creatinine, inr, sodium, female)
-                st.markdown(f"**Calculated MELD 3.0 score: {meld3}**")
+                st.info(f"Calculated MELD 3.0 score: {meld3}")
             else:
                 meld3 = 0
         
@@ -248,32 +261,44 @@ def main():
         st.subheader("Inflammatory/Performance Status")
         nlr = st.number_input("NLR", 0.0, 50.0, step=0.1)
         ecog = st.selectbox("ECOG Performance Status", [0, 1, 2, 3])
-    
+
     # Calculate button
-    if st.button("Calculate Y90RS Score"):
+    if st.button("Calculate Y90RS Score", type="primary"):
         score = calculate_y90rs(
-            tumor_size, tumor_volume, afp, portal_vein_status, 
+            tumor_size, tumor_volume, afp, portal_vein_status,
             shunt_fraction, meld3, albumin, alt_ast_ratio, nlr, ecog
         )
-        risk_category = get_risk_category(score)
-        recommendations = get_recommendations(risk_category)
         
+        # Determine risk category
+        if score <= 6:
+            risk_category = "Low Risk"
+            color = "success"
+            mortality = "<10%"
+        elif score <= 12:
+            risk_category = "Intermediate Risk"
+            color = "warning"
+            mortality = "10-30%"
+        else:
+            risk_category = "High Risk"
+            color = "error"
+            mortality = ">30%"
+
         # Display results
         st.markdown("---")
-        st.markdown(f"### Results")
-        col1, col2, col3 = st.columns(3)
+        st.subheader("Results")
         
-        with col1:
-            st.markdown(f"#### Score: {score}")
-        with col2:
-            st.markdown(f"#### Risk Category: {risk_category}")
-        with col3:
-            if risk_category == "Low Risk":
-                st.markdown("#### Mortality Risk: <10%")
-            elif risk_category == "Intermediate Risk":
-                st.markdown("#### Mortality Risk: 10-30%")
-            else:
-                st.markdown("#### Mortality Risk: >30%")
+        # Create three columns for the results
+        res_col1, res_col2, res_col3 = st.columns(3)
+        
+        with res_col1:
+            st.metric("Total Score", f"{score}")
+        with res_col2:
+            st.metric("Risk Category", risk_category)
+        with res_col3:
+            st.metric("Mortality Risk", mortality)
+
+        # Get recommendations
+        recommendations = get_recommendations(risk_category)
         
         # Display recommendations
         st.markdown("### Management Recommendations")
