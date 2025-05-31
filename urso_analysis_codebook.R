@@ -1,29 +1,3 @@
-
-########################################################################
-#  URSO vs CONTROL Comprehensive Analysis Codebook (R)                #
-#  ------------------------------------------------------------------ #
-#  This script reproduces *all* analyses performed in the ChatGPT      #
-#  session, fully documented for verification and reproducibility.    #
-#                                                                      #
-#  Contents                                                            #
-#  --------                                                            #
-#   1.  Libraries & helper functions                                   #
-#   2.  Load Excel workbook                                            #
-#   3.  Data cleaning & harmonisation                                  #
-#   4.  Propensity‑score matching (age + sex)                          #
-#   5.  Table 1  – Baseline characteristics (pre‑ & post‑match)        #
-#   6.  Table 2  – Temporal enzyme trajectory                          #
-#   7.  Table 4  – Sub‑group AST analysis (pre‑ & post‑match)          #
-#   8.  Table 6  – Dose–response summary                               #
-#                                                                      #
-#  Notes                                                               #
-#  -----                                                               #
-#  • The script assumes the workbook file is in the same directory     #
-#    and is named  'OPV + Urso (4).xlsx'.                              #
-#  • Output tables are written as CSVs in './output/'.                 #
-#  • No random processes are used, so the run is fully deterministic.  #
-########################################################################
-
 ## 1 ── Libraries -------------------------------------------------------
 
 suppressPackageStartupMessages({
